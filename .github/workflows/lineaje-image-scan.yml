@@ -10,54 +10,54 @@ on:
       version:
         description: "Image version"
         required: true
-        default: "v1"
+        default: "10.1.53"
 
 jobs:
   scan-and-fix:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.branch }}
 
       # 1. Build the original image
-      - run: docker build -t acme-base-image:latest .
+      - name: Build original image
+        run: docker build -t tomcat:${{ github.event.inputs.version }} .
 
-      # 2. Scan + fix plan → uploads patched Dockerfile artifact
+      # 2. Scan + fix plan
       - name: Lineaje scan + fix plan
         id: scan
         uses: lineaje-actions/lineaje-actions@v1
         with:
           scan_type: image
-          image: acme-base-image:latest
+          image: tomcat:${{ github.event.inputs.version }}
           metafiles: Dockerfile
           lineaje_cli_token: ${{ secrets.LINEAJE_CLI_TOKEN }}
-          project_name: "acme-base-image"
+          project_name: "tomcat"
           project_version: ${{ github.event.inputs.version }}
           org_name: "Root Organization"
           post_scan: fix_plan
 
-      # 3. Rebuild only when curated fixes exist (already available as-is).
-      #    Skip when premium_only=true — those fixes must be requested from
-      #    Lineaje first and are not yet available to apply.
+      # 3. Rebuild when curated fixes are available
       - name: Build patched image
         if: steps.scan.outputs.premium_only == 'false' && steps.scan.outputs.fix_artifact_uploaded == 'true'
         run: |
           docker build \
             -f ${{ steps.scan.outputs.patched_dockerfile }} \
-            -t acme-base-image:latest-patched \
+            -t tomcat:${{ github.event.inputs.version }}-patched \
             .
 
-      # 4. Rescan the patched image to confirm fixes
+      # 4. Rescan the patched image
       - name: Lineaje rescan (patched)
         if: steps.scan.outputs.premium_only == 'false' && steps.scan.outputs.fix_artifact_uploaded == 'true'
         uses: lineaje-actions/lineaje-actions@v1
         with:
           scan_type: image
-          image: acme-base-image:latest-patched
+          image: tomcat:${{ github.event.inputs.version }}-patched
           metafiles: Dockerfile
           lineaje_cli_token: ${{ secrets.LINEAJE_CLI_TOKEN }}
-          project_name: "acme-base-image"
+          project_name: "tomcat"
           project_version: "${{ github.event.inputs.version }}-patched"
           org_name: "Root Organization"
           post_scan: scan_only
