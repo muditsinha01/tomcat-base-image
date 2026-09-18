@@ -10,7 +10,7 @@ on:
       version:
         description: "Image version"
         required: true
-        default: "10.1.53"
+        default: "21.0.11_10-jre-alpine-3.21"
 
 jobs:
   scan-and-fix:
@@ -23,7 +23,7 @@ jobs:
 
       # 1. Build the original image
       - name: Build original image
-        run: docker build -t tomcat:${{ github.event.inputs.version }} .
+        run: docker build -t java-temurin:${{ github.event.inputs.version }} .
 
       # 2. Scan + fix plan
       - name: Lineaje scan + fix plan
@@ -31,10 +31,10 @@ jobs:
         uses: lineaje-actions/lineaje-actions@v1
         with:
           scan_type: image
-          image: tomcat:${{ github.event.inputs.version }}
+          image: java-temurin:${{ github.event.inputs.version }}
           metafiles: Dockerfile
           lineaje_cli_token: ${{ secrets.LINEAJE_CLI_TOKEN }}
-          project_name: "tomcat"
+          project_name: "java-temurin"
           project_version: ${{ github.event.inputs.version }}
           org_name: "Root Organization"
           post_scan: fix_plan
@@ -45,7 +45,7 @@ jobs:
         run: |
           docker build \
             -f ${{ steps.scan.outputs.patched_dockerfile }} \
-            -t tomcat:${{ github.event.inputs.version }}-patched \
+            -t java-temurin:${{ github.event.inputs.version }}-patched \
             .
 
       # 4. Rescan the patched image
@@ -54,10 +54,10 @@ jobs:
         uses: lineaje-actions/lineaje-actions@v1
         with:
           scan_type: image
-          image: tomcat:${{ github.event.inputs.version }}-patched
+          image: java-temurin:${{ github.event.inputs.version }}-patched
           metafiles: Dockerfile
           lineaje_cli_token: ${{ secrets.LINEAJE_CLI_TOKEN }}
-          project_name: "tomcat"
+          project_name: "java-temurin"
           project_version: "${{ github.event.inputs.version }}-patched"
           org_name: "Root Organization"
           post_scan: scan_only
