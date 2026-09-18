@@ -1,3 +1,5 @@
-FROM alpine:3.20.9
+FROM tomcat:10.1.53-jre21-temurin-noble
 
-LABEL maintainer="admin@lineaje.com"
+EXPOSE 8080
+
+CMD ["catalina.sh", "run"]
