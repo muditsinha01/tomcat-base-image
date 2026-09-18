@@ -1,5 +1,3 @@
-FROM tomcat:10.1.53-jre21-temurin-noble
+FROM eclipse-temurin:21.0.11_10-jre-alpine-3.21
 
-EXPOSE 8080
-
-CMD ["catalina.sh", "run"]
+CMD ["java", "-version"]
